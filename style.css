@@ -1,8 +1,8 @@
 /* Custom CSS */
 :root {
-    primary-color: #4e73df;
-    secondary-color: #2e59d9;
-    accent-color: #f8f9fc;
+    --primary-color: #4e73df;
+    --secondary-color: #2e59d9;
+    --accent-color: #f8f9fc;
 }
 
 body {
