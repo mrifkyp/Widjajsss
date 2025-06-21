@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SekaliPay - Digital Payment</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        /* Custom CSS */
+        :root {
+            --primary-color: #4e73df;
+            --secondary-color: #2e59d9;
+            --accent-color: #f8f9fc;
+        }
+        
+        body {
+            font-family: 'Nunito', sans-serif;
+            background-color: #f8f9fc;
+        }
+        
+        .navbar {
+            box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+        }
+        
+        .card {
+            border: none;
+            border-radius: 0.35rem;
+            box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.1);
+            transition: transform 0.3s;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .balance-card {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            color: white;
+        }
+        
+        #balance-amount {
+            font-size: 2.5rem;
+            font-weight: 700;
+        }
+        
+        .product-img {
+            height: 150px;
+            object-fit: cover;
+            border-top-left-radius: 0.35rem;
+            border-top-right-radius: 0.35rem;
+        }
+        
+        .section-title {
+            position: relative;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .section-title:after {
+            content: "";
+            position: absolute;
+            left: 0;
+            bottom: 0;
+            width: 50px;
+            height: 3px;
+            background: var(--primary-color);
+        }
+        
+        .loading-spinner {
+            display: none;
+            width: 3rem;
+            height: 3rem;
+        }
+        
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            #balance-amount {
+                font-size: 2rem;
+            }
+            
+            .product-img {
+                height: 120px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary sticky-top">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="#">
+                <i class="bi bi-wallet2 me-2"></i>SekaliPay
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="#balance">
+                            <i class="bi bi-cash-coin me-1"></i>Saldo
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#items">
+                            <i class="bi bi-shop me-1"></i>Produk
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#leaderboard">
+                            <i class="bi bi-trophy me-1"></i>Leaderboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#transactions">
+                            <i class="bi bi-clock-history me-1"></i>Transaksi
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container my-5">
+        <!-- Balance Section -->
+        <section id="balance" class="mb-5">
+            <h2 class="section-title">Saldo Anda</h2>
+            <div class="card balance-card">
+                <div class="card-body py-4">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="card-subtitle mb-2">Saldo Tersedia</h5>
+                            <h3 class="card-title">Rp <span id="balance-amount">0</span></h3>
+                        </div>
+                        <button class="btn btn-light" data-bs-toggle="modal" data-bs-target="#topupModal">
+                            <i class="bi bi-plus-lg me-1"></i>Top Up
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Products Section -->
+        <section id="items" class="mb-5">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h2 class="section-title">Daftar Produk</h2>
+                <div class="spinner-border text-primary loading-spinner" id="product-spinner" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+            </div>
+            <div class="row g-4" id="product-list">
+                <!-- Products will be loaded here -->
+                <div class="col-12 text-center py-5">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2">Memuat produk...</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Leaderboard Section -->
+        <section id="leaderboard" class="mb-5">
+            <h2 class="section-title">Top 10 Leaderboard</h2>
+            <div class="card">
+                <div class="card-body">
+                    <ul class="nav nav-tabs" id="leaderboardTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="monthly-tab" data-bs-toggle="tab" data-bs-target="#monthly" type="button">Bulanan</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="weekly-tab" data-bs-toggle="tab" data-bs-target="#weekly" type="button">Mingguan</button>
+                        </li>
+                    </ul>
+                    <div class="tab-content py-3" id="leaderboardTabContent">
+                        <div class="tab-pane fade show active" id="monthly" role="tabpanel">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Peringkat</th>
+                                            <th>Nama</th>
+                                            <th>Total Belanja</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="monthly-leaderboard">
+                                        <!-- Monthly data will be loaded here -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="tab-pane fade" id="weekly" role="tabpanel">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Peringkat</th>
+                                            <th>Nama</th>
+                                            <th>Total Belanja</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="weekly-leaderboard">
+                                        <!-- Weekly data will be loaded here -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Transactions Section -->
+        <section id="transactions" class="mb-5">
+            <h2 class="section-title">Riwayat Transaksi</h2>
+            <div class="card">
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Tanggal</th>
+                                    <th>Produk</th>
+                                    <th>Jumlah</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="transaction-list">
+                                <!-- Transactions will be loaded here -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <nav aria-label="Transaction pagination">
+                        <ul class="pagination justify-content-center" id="transaction-pagination">
+                            <!-- Pagination will be loaded here -->
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- Top Up Modal -->
+    <div class="modal fade" id="topupModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Top Up Saldo</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="topup-form">
+                        <div class="mb-3">
+                            <label for="topup-amount" class="form-label">Jumlah Top Up</label>
+                            <div class="input-group">
+                                <span class="input-group-text">Rp</span>
+                                <input type="number" class="form-control" id="topup-amount" min="10000" max="10000000" required>
+                            </div>
+                            <div class="form-text">Minimal Rp 10.000, Maksimal Rp 10.000.000</div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="payment-method" class="form-label">Metode Pembayaran</label>
+                            <select class="form-select" id="payment-method" required>
+                                <option value="">Pilih metode...</option>
+                                <option value="bank_transfer">Transfer Bank</option>
+                                <option value="ewallet">E-Wallet</option>
+                                <option value="virtual_account">Virtual Account</option>
+                            </select>
+                        </div>
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary" id="topup-submit">
+                                <span class="spinner-border spinner-border-sm d-none" id="topup-spinner" role="status"></span>
+                                Lanjutkan Top Up
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    
+    <!-- Bootstrap JS Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // Configuration
+        const API_BASE_URL = 'https://sekalipay.com/api/v1';
+        const API_KEY = 'YZVra5zevtPGJJP5VzKe0dVfbFGFJaEP'; // Ganti dengan API key Anda
+        
+        // DOM Elements
+        const balanceAmountEl = document.getElementById('balance-amount');
+        const productListEl = document.getElementById('product-list');
+        const productSpinnerEl = document.getElementById('product-spinner');
+        const monthlyLeaderboardEl = document.getElementById('monthly-leaderboard');
+        const weeklyLeaderboardEl = document.getElementById('weekly-leaderboard');
+        const transactionListEl = document.getElementById('transaction-list');
+        const transactionPaginationEl = document.getElementById('transaction-pagination');
+        const topupFormEl = document.getElementById('topup-form');
+        const topupSpinnerEl = document.getElementById('topup-spinner');
+        
+        // Current page state
+        let currentTransactionPage = 1;
+        const transactionsPerPage = 5;
+        
+        // Format currency
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('id-ID', { 
+                style: 'currency', 
+                currency: 'IDR',
+                minimumFractionDigits: 0
+            }).format(amount);
+        }
+        
+        // Format date
+        function formatDate(dateString) {
+            const options = { 
+                year: 'numeric', 
+                month: 'short', 
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            };
+            return new Date(dateString).toLocaleDateString('id-ID', options);
+        }
+        
+        // Fetch data from API with error handling
+        async function fetchApiData(endpoint, method = 'GET', body = null) {
+            try {
+                const headers = {
+                    'Accept': 'application/json',
+                    'X-API-KEY': API_KEY
+                };
+                
+                if (method !== 'GET') {
+                    headers['Content-Type'] = 'application/json';
+                }
+                
+                const options = {
+                    method,
+                    headers
+                };
+                
+                if (body) {
+                    options.body = JSON.stringify(body);
+                }
+                
+                const response = await fetch(`${API_BASE_URL}/${endpoint}`, options);
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || 'Request failed');
+                }
+                
+                return await response.json();
+            } catch (error) {
+                console.error('API Error:', error);
+                showAlert('danger', `Error: ${error.message}`);
+                return null;
+            }
+        }
+        
+        // Show alert message
+        function showAlert(type, message) {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed top-0 end-0 m-3`;
+            alertDiv.style.zIndex = '1100';
+            alertDiv.role = 'alert';
+            alertDiv.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            
+            document.body.appendChild(alertDiv);
+            
+            // Auto dismiss after 5 seconds
+            setTimeout(() => {
+                const bsAlert = new bootstrap.Alert(alertDiv);
+                bsAlert.close();
+            }, 5000);
+        }
+        
+        // Load user balance
+        async function loadBalance() {
+            const data = await fetchApiData('balance');
+            
+            if (data && data.data) {
+                balanceAmountEl.textContent = data.data.balance.toLocaleString('id-ID');
+            }
+        }
+        
+        // Load products
+        async function loadProducts() {
+            productSpinnerEl.style.display = 'block';
+            productListEl.innerHTML = `
+                <div class="col-12 text-center py-5">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2">Memuat produk...</p>
+                </div>
+            `;
+            
+            const data = await fetchApiData('item');
+            productSpinnerEl.style.display = 'none';
+            
+            if (data && data.data) {
+                if (data.data.length === 0) {
+                    productListEl.innerHTML = `
+                        <div class="col-12 text-center py-5">
+                            <i class="bi bi-box-seam display-5 text-muted"></i>
+                            <p class="mt-3">Tidak ada produk tersedia</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                productListEl.innerHTML = data.data.map(product => `
+                    <div class="col-md-4 col-sm-6">
+                        <div class="card h-100">
+                            <img src="https://via.placeholder.com/300x150?text=${encodeURIComponent(product.name)}" class="product-img card-img-top" alt="${product.name}">
+                            <div class="card-body d-flex flex-column">
+                                <h5 class="card-title">${product.name}</h5>
+                                <p class="card-text text-muted">${product.description || 'Deskripsi tidak tersedia'}</p>
+                                <div class="mt-auto">
+                                    <p class="h5 text-primary mb-3">${formatCurrency(product.price)}</p>
+                                    <button class="btn btn-primary w-100 buy-btn" data-product-id="${product.id}">
+                                        <i class="bi bi-cart-plus me-1"></i>Beli
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+                
+                // Add event listeners to buy buttons
+                document.querySelectorAll('.buy-btn').forEach(button => {
+                    button.addEventListener('click', () => {
+                        const productId = button.getAttribute('data-product-id');
+                        showAlert('info', `Fitur pembelian produk ${productId} akan diimplementasikan`);
+                    });
+                });
+            }
+        }
+        
+        // Load leaderboard data
+        async function loadLeaderboard() {
+            const [monthlyData, weeklyData] = await Promise.all([
+                fetchApiData('leaderboard?type=monthly'),
+                fetchApiData('leaderboard?type=weekly')
+            ]);
+            
+            if (monthlyData && monthlyData.data) {
+                monthlyLeaderboardEl.innerHTML = monthlyData.data.map((user, index) => `
+                    <tr>
+                        <td>${index + 1}</td>
+                        <td>${user.buyer_name}</td>
+                        <td>${formatCurrency(parseInt(user.total_spent))}</td>
+                    </tr>
+                `).join('');
+            }
+            
+            if (weeklyData && weeklyData.data) {
+                weeklyLeaderboardEl.innerHTML = weeklyData.data.map((user, index) => `
+                    <tr>
+                        <td>${index + 1}</td>
+                        <td>${user.buyer_name}</td>
+                        <td>${formatCurrency(parseInt(user.total_spent))}</td>
+                    </tr>
+                `).join('');
+            }
+        }
+        
+        // Load user rank
+        async function loadUserRank() {
+            const data = await fetchApiData('leaderboard/profile');
+            
+            if (data && data.data) {
+                const rank = data.data.ranked;
+                if (rank > 0) {
+                    showAlert('success', `Peringkat Anda: #${rank}`);
+                }
+            }
+        }
+        
+        // Load transactions
+        async function loadTransactions(page = 1) {
+            currentTransactionPage = page;
+            const data = await fetchApiData(`trx?page=${page}&per_page=${transactionsPerPage}`);
+            
+            if (data && data.data) {
+                // Update transactions list
+                transactionListEl.innerHTML = data.data.transactions.map(trx => `
+                    <tr>
+                        <td>${trx.id}</td>
+                        <td>${formatDate(trx.created_at)}</td>
+                        <td>${trx.items.join(', ')}</td>
+                        <td>${formatCurrency(trx.amount)}</td>
+                        <td>
+                            <span class="badge bg-${trx.status === 'success' ? 'success' : 'warning'}">
+                                ${trx.status === 'success' ? 'Berhasil' : 'Pending'}
+                            </span>
+                        </td>
+                    </tr>
+                `).join('');
+                
+                // Update pagination
+                const totalPages = Math.ceil(data.data.pagination.total / transactionsPerPage);
+                transactionPaginationEl.innerHTML = '';
+                
+                // Previous button
+                transactionPaginationEl.innerHTML += `
+                    <li class="page-item ${page === 1 ? 'disabled' : ''}">
+                        <a class="page-link" href="#" onclick="loadTransactions(${page - 1})">&laquo;</a>
+                    </li>
+                `;
+                
+                // Page numbers
+                for (let i = 1; i <= totalPages; i++) {
+                    transactionPaginationEl.innerHTML += `
+                        <li class="page-item ${i === page ? 'active' : ''}">
+                            <a class="page-link" href="#" onclick="loadTransactions(${i})">${i}</a>
+                        </li>
+                    `;
+                }
+                
+                // Next button
+                transactionPaginationEl.innerHTML += `
+                    <li class="page-item ${page === totalPages ? 'disabled' : ''}">
+                        <a class="page-link" href="#" onclick="loadTransactions(${page + 1})">&raquo;</a>
+                    </li>
+                `;
+            }
+        }
+        
+        // Handle top up form submission
+        topupFormEl.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const amount = parseInt(document.getElementById('topup-amount').value);
+            const method = document.getElementById('payment-method').value;
+            
+            // Validation
+            if (amount < 10000 || amount > 10000000) {
+                showAlert('danger', 'Jumlah top up harus antara Rp 10.000 - Rp 10.000.000');
+                return;
+            }
+            
+            if (!method) {
+                showAlert('danger', 'Silakan pilih metode pembayaran');
+                return;
+            }
+            
+            // Show loading spinner
+            topupSpinnerEl.classList.remove('d-none');
+            document.getElementById('topup-submit').disabled = true;
+            
+            try {
+                const response = await fetchApiData('balance', 'POST', {
+                    ref_id: 'ref_' + Date.now(),
+                    code: method,
+                    amount: amount
+                });
+                
+                if (response) {
+                    showAlert('success', 'Top up berhasil! Saldo akan segera diperbarui');
+                    loadBalance();
+                    
+                    // Close modal
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('topupModal'));
+                    modal.hide();
+                    
+                    // Reset form
+                    topupFormEl.reset();
+                }
+            } finally {
+                // Hide loading spinner
+                topupSpinnerEl.classList.add('d-none');
+                document.getElementById('topup-submit').disabled = false;
+            }
+        });
+        
+        // Initialize the application
+        async function initApp() {
+            // Load all data
+            await Promise.all([
+                loadBalance(),
+                loadProducts(),
+                loadLeaderboard(),
+                loadUserRank(),
+                loadTransactions()
+            ]);
+            
+            // Show welcome message
+            setTimeout(() => {
+                showAlert('info', 'Selamat datang di SekaliPay!');
+            }, 1000);
+        }
+        
+        // Run the app when DOM is loaded
+        document.addEventListener('DOMContentLoaded', initApp);
+        
+        // Make loadTransactions available globally for pagination
+        window.loadTransactions = loadTransactions;
+    </script>
+</body>
+</html>
